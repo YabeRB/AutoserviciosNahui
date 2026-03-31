@@ -6,12 +6,13 @@ import {
     TextInput, 
     TouchableOpacity, 
     ScrollView,
-    Alert
+    Alert,
+    ActivityIndicator
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
 import { AppColors } from '../theme/Colors';
-import { auth } from '../config/FirebaseConfig';
+import { getFirebaseAuth } from '../config/firebaseConfig';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 
 export default function LoginScreen({ navigation }) {
@@ -19,22 +20,37 @@ export default function LoginScreen({ navigation }) {
     const [password, setPassword] = useState('');
     const [obscurePassword, setObscurePassword] = useState(true);
 
-    const handleLoginWithEmail = async () => {
-    if (email === '' || password === '') {
+    const [isLoading, setIsLoading] = useState(false);
+
+const handleLoginWithEmail = async () => {
+    const auth = getFirebaseAuth();
+    if (email.trim() === '' || password.trim() === '') {
         Alert.alert("Error", "Por favor, llena todos los campos");
         return;
     }
 
+    setIsLoading(true); 
+
     try {
         await signInWithEmailAndPassword(auth, email.trim(), password);
-        Alert.alert("¡Éxito!", "Bienvenido a Autoservicios Ñahui");
-        navigation.replace('Home');
+        navigation.replace('Welcome'); 
+        
     } catch (error) {
         let message = "Ocurrió un error al iniciar sesión";
-        if (error.code === 'auth/user-not-found') message = "Usuario no encontrado";
-        if (error.code === 'auth/wrong-password') message = "Contraseña incorrecta";
+        
+        if (error.code === 'auth/invalid-credential') {
+            message = "Correo o contraseña incorrectos";
+        } else if (error.code === 'auth/user-not-found') {
+            message = "Este correo no está registrado";
+        } else if (error.code === 'auth/wrong-password') {
+            message = "La contraseña es incorrecta";
+        } else if (error.code === 'auth/invalid-email') {
+            message = "El formato del correo no es válido";
+        }
 
         Alert.alert("Error de Login", message);
+    } finally {
+        setIsLoading(false); 
     }
 };
 
@@ -103,8 +119,15 @@ export default function LoginScreen({ navigation }) {
                         <Text style={styles.forgotPasswordText}>¿Olvidé mi contraseña?</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.primaryButton} onPress={handleLoginWithEmail}>
+                    <TouchableOpacity style={[styles.primaryButton, isLoading && { opacity: 0.7 }]} 
+                        onPress={handleLoginWithEmail}
+                        disabled={isLoading}
+                    >
+                        {isLoading ? (
+                            <ActivityIndicator color={AppColors.white} />
+                        ) : (
                         <Text style={styles.primaryButtonText}>Iniciar sesión</Text>
+                        )}
                     </TouchableOpacity>
 
                     <View style={styles.dividerContainer}>

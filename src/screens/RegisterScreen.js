@@ -13,6 +13,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { AppColors } from '../theme/Colors';
 
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { auth } from '../config/firebaseConfig'; 
+
 export default function RegisterScreen({ navigation }) {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -24,7 +27,7 @@ export default function RegisterScreen({ navigation }) {
     const [acceptedTerms, setAcceptedTerms] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
-    const handleRegister = () => {
+    const handleRegister = async () => {
         if (!acceptedTerms) {
             Alert.alert('Atención', 'Debes aceptar los términos y condiciones');
             return;
@@ -35,18 +38,42 @@ export default function RegisterScreen({ navigation }) {
             return;
         }
 
-        if (name === '' || email === '' || password === '') {
+        if (name.trim() === '' || email.trim() === '' || password.trim() === '') {
             Alert.alert('Campos incompletos', 'Por favor, completa todos los campos');
             return;
         }
 
         setIsLoading(true);
 
-        setTimeout(() => {
-            setIsLoading(false);
+        try {
+            const userCredential = await createUserWithEmailAndPassword(
+                auth, 
+                email.trim(), 
+                password.trim()
+            );
+
+            await updateProfile(userCredential.user, {
+                displayName: name.trim()
+            });
+
             Alert.alert('¡Éxito!', 'Cuenta creada con éxito. Por favor inicia sesión.');
             navigation.replace('Login');
-        }, 2000);
+
+        } catch (error) {
+            let errorMessage = 'Ocurrió un error al registrarse';
+            
+            if (error.code === 'auth/weak-password') {
+                errorMessage = 'La contraseña es muy débil (mínimo 6 caracteres)';
+            } else if (error.code === 'auth/email-already-in-use') {
+                errorMessage = 'Ya existe una cuenta con este correo';
+            } else if (error.code === 'auth/invalid-email') {
+                errorMessage = 'El formato del correo no es válido';
+            }
+
+            Alert.alert('Error', errorMessage);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const CustomInput = ({ label, hint, icon, value, onChangeText, isPassword, obscure, toggleObscure, keyboardType = 'default' }) => (

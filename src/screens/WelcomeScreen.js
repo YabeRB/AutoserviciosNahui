@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons'; 
 import { SafeAreaView } from 'react-native-safe-area-context'; 
-import { AppColors } from '../theme/Colors'; 
+import { AppColors } from '../theme/Colors';
 
 export default function WelcomeScreen({ navigation }) {
     const [carTapCount, setCarTapCount] = useState(0);
@@ -20,7 +20,7 @@ export default function WelcomeScreen({ navigation }) {
         
         if (newCount >= 5) {
             setCarTapCount(0);
-            Alert.alert("Secreto", "¡Encontraste el menú de configuración!"); 
+            navigation.navigate('RoleSelection');
         }
     };
 
