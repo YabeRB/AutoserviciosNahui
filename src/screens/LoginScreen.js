@@ -115,7 +115,10 @@ const handleLoginWithEmail = async () => {
                         </TouchableOpacity>
                     </View>
 
-                    <TouchableOpacity style={styles.forgotPasswordContainer}>
+                    <TouchableOpacity 
+                        style={styles.forgotPasswordContainer}
+                        onPress={() => navigation.navigate('ForgotPassword')}
+                    >
                         <Text style={styles.forgotPasswordText}>¿Olvidé mi contraseña?</Text>
                     </TouchableOpacity>
 
